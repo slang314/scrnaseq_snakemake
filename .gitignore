@@ -8,6 +8,15 @@ data/
 # Snakemake internals
 .snakemake/
 
+# Reference files (large - rebuild with scripts/setup_reference.sh)
+resources/reference/af_ref/index/
+resources/reference/download/
+*.bak
+
+# Keep these small reference files (tracked in git):
+# - resources/reference/af_ref/t2g.tsv
+# - resources/reference/af_ref/3M-february-2018.txt
+
 # Python
 __pycache__/
 *.pyc

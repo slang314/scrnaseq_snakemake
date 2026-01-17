@@ -1,0 +1,35 @@
+initial run command:
+snakemake --cores 16 --use-conda 2>&1 | tee snakemake_10k_run_$(date +%Y%m%d_%H%M%S).log
+
+
+
+● Conda environments used:
+  ┌───────────────────────────┬──────────────────┐
+  │        Rule/Script        │   Environment    │
+  ├───────────────────────────┼──────────────────┤
+  │ alevin_fry_quant          │ envs/af.yaml     │
+  ├───────────────────────────┼──────────────────┤
+  │ af_to_anndata             │ envs/scanpy.yaml │
+  ├───────────────────────────┼──────────────────┤
+  │ scanpy_qc                 │ envs/scanpy.yaml │
+  ├───────────────────────────┼──────────────────┤
+  │ merge_qc                  │ envs/scanpy.yaml │
+  ├───────────────────────────┼──────────────────┤
+  │ downstream_analysis_v3.py │ envs/scanpy.yaml │
+  ├───────────────────────────┼──────────────────┤
+  │ vae_embedding.py          │ envs/scanpy.yaml │
+  └───────────────────────────┴──────────────────┘
+  ---
+  Commands to run each part:
+
+  # 1. Run full snakemake pipeline (quantification + QC)
+  snakemake --cores 16 --use-conda
+
+  # 2. Force re-run everything
+  snakemake --cores 16 --use-conda --forceall
+
+  # 3. Run downstream analysis (manually)
+  conda run -n scanpy python scripts/downstream_analysis_v3.py
+
+  # 4. Run VAE embedding (manually)
+  conda run -n scanpy python scripts/vae_embedding.py

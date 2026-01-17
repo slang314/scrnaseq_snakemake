@@ -1,0 +1,25 @@
+# Large files / generated outputs
+results/
+data/
+*.fastq.gz
+*.tar
+*.h5ad
+
+# Snakemake internals
+.snakemake/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

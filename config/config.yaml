@@ -1,0 +1,25 @@
+# Reference bundle produced outside the pipeline (recommended) and stored under resources/reference/
+reference:
+  af_dir: "resources/reference/af_ref"   # contains salmon index etc., per your build process
+  txome: "resources/reference/transcripts.fa"  # optional; used for provenance only
+  gene_map: "resources/reference/gene_map.tsv" # transcript->gene mapping if needed
+
+alevin_fry:
+  # 10x Chromium 3' v3 chemistry (16bp BC + 12bp UMI)
+  threads: 16
+  mem_gb: 48
+  chemistry: "3prime-v3"
+  salmon_flags: "--chromiumV3"  # v3 chemistry
+  expected_cells: 10000
+
+scanpy_qc:
+  species: "human"
+  mito_prefix: "MT-"      # human: MT- ; mouse: mt-
+  min_genes: 10            # relaxed from 200 for testing
+  min_cells_per_gene: 3
+  max_pct_mt: 20
+  max_counts: null
+  max_genes: null
+
+downstream:
+  merge_qc: true

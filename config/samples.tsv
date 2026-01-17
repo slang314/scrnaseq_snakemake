@@ -1,0 +1,2 @@
+sample	fq1	fq2
+pbmc_10k_v3	/home/slang/scrnaseq_snakemake/data/fastq/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R1_001.fastq.gz,/home/slang/scrnaseq_snakemake/data/fastq/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L002_R1_001.fastq.gz	/home/slang/scrnaseq_snakemake/data/fastq/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R2_001.fastq.gz,/home/slang/scrnaseq_snakemake/data/fastq/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L002_R2_001.fastq.gz

@@ -1,0 +1,8 @@
+name: af
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - salmon
+  - alevin-fry
+  - pigz

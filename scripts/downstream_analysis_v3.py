@@ -432,6 +432,36 @@ for cluster in sorted(adata.obs['leiden'].unique(), key=int):
     print(f"  Cluster {cluster}: {', '.join(symbols)}")
 
 # =============================================================================
+# 12b. CELL TYPE DIFFERENTIAL EXPRESSION (CellTypist annotations)
+# =============================================================================
+print("\n" + "=" * 60)
+print("12b. Cell type differential expression")
+print("=" * 60)
+
+# Find DE genes between cell types using CellTypist annotations
+sc.tl.rank_genes_groups(adata, groupby='celltypist_label', method='wilcoxon', key_added='markers_celltype')
+print("Computed DE genes per cell type (Wilcoxon, one-vs-rest)")
+
+# Get cell type marker dataframe
+celltype_markers_df = sc.get.rank_genes_groups_df(adata, group=None, key='markers_celltype')
+
+# Map gene IDs to symbols
+celltype_markers_df['gene_symbol'] = celltype_markers_df['names'].map(
+    lambda x: adata.var.loc[x, 'gene_symbol'] if x in adata.var.index else None
+)
+
+celltype_markers_df.to_csv(f"{OUTPUT_DIR}/de_genes_by_celltype.tsv", sep='\t', index=False)
+print("Saved: de_genes_by_celltype.tsv")
+
+# Top 5 DE genes per cell type
+print("\nTop 5 DE genes per cell type:")
+celltype_top = celltype_markers_df.groupby('group').head(5)
+for celltype in sorted(adata.obs['celltypist_label'].unique()):
+    ct_markers = celltype_top[celltype_top['group'] == celltype]
+    symbols = ct_markers['gene_symbol'].fillna(ct_markers['names']).tolist()
+    print(f"  {celltype}: {', '.join(symbols[:5])}")
+
+# =============================================================================
 # 13. PBMC MARKER VISUALIZATION
 # =============================================================================
 print("\n" + "=" * 60)

@@ -11,7 +11,7 @@ This pipeline processes 10x Chromium scRNA-seq data through:
 3. **Downstream analysis** - Clustering, cell type annotation, differential expression, marker genes, VAE embedding
 
 ## Quick Start
-
+Note: you must have conda installed (recommend miniconda), instructions for which will vary based on your OS
 ```bash
 # 1. Clone the repository
 git clone https://github.com/slang314/scrnaseq_snakemake.git

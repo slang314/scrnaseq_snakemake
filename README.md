@@ -8,7 +8,7 @@ This pipeline processes 10x Chromium scRNA-seq data through:
 
 1. **Quantification** - salmon alevin + alevin-fry (pseudoalignment, UMI deduplication, cell calling)
 2. **QC** - Scanpy quality control with filtering and visualization
-3. **Downstream analysis** - Clustering, cell type annotation, marker genes, VAE embedding
+3. **Downstream analysis** - Clustering, cell type annotation, differential expression, marker genes, VAE embedding
 
 ## Quick Start
 

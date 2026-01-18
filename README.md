@@ -160,11 +160,15 @@ results/downstream_v3/
 │   ├── umap_celltypist.png      # Cell type annotations
 │   ├── umap_pbmc_markers.png    # Marker gene expression
 │   ├── doublet_scores.png       # Scrublet doublet detection
+│   ├── volcano_plots_all_celltypes.png  # DE volcano plots (overview)
+│   ├── volcano_individual/      # Individual volcano plots per cell type
 │   ├── vae_training_loss.png    # VAE training curve
 │   ├── umap_pca_vs_vae.png      # PCA vs VAE comparison
 │   └── umap_vae_markers.png     # Markers on VAE UMAP
-├── pbmc_10k_annotated_v3.h5ad   # Full annotated dataset
-└── pbmc_10k_annotated_v3_clean.h5ad  # Doublets removed
+├── marker_genes_all_clusters.tsv    # Marker genes per Leiden cluster
+├── de_genes_by_celltype.tsv         # DE genes per cell type (CellTypist)
+├── pbmc_10k_annotated_v3.h5ad       # Full annotated dataset
+└── pbmc_10k_annotated_v3_clean.h5ad # Doublets removed
 ```
 
 ## Configuration

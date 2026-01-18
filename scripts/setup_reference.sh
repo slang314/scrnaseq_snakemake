@@ -81,10 +81,46 @@ else
 fi
 
 # ------------------------------------------------------------
-# 4. Build salmon index
+# 4. Build gene ID to gene name mapping
 # ------------------------------------------------------------
 echo ""
-echo "4. Building salmon index (this may take 10-20 minutes)..."
+echo "4. Building gene ID to name mapping..."
+
+GENE_MAP="$REF_DIR/gene_id_to_name.tsv"
+if [ ! -f "$GENE_MAP" ]; then
+    echo "   Extracting gene IDs and names from GTF..."
+    zcat "$GTF" | awk -F'\t' '
+        $3 == "gene" {
+            gene_id = ""; gene_name = ""
+            n = split($9, attrs, ";")
+            for (i = 1; i <= n; i++) {
+                gsub(/^ +| +$/, "", attrs[i])
+                if (attrs[i] ~ /^gene_id/) {
+                    gsub(/gene_id "/, "", attrs[i])
+                    gsub(/"/, "", attrs[i])
+                    gene_id = attrs[i]
+                }
+                if (attrs[i] ~ /^gene_name/) {
+                    gsub(/gene_name "/, "", attrs[i])
+                    gsub(/"/, "", attrs[i])
+                    gene_name = attrs[i]
+                }
+            }
+            if (gene_id != "" && gene_name != "") {
+                print gene_id "\t" gene_name
+            }
+        }
+    ' > "$GENE_MAP"
+    echo "   Created $GENE_MAP ($(wc -l < "$GENE_MAP") genes)"
+else
+    echo "   gene_id_to_name.tsv already exists, skipping."
+fi
+
+# ------------------------------------------------------------
+# 5. Build salmon index
+# ------------------------------------------------------------
+echo ""
+echo "5. Building salmon index (this may take 10-20 minutes)..."
 
 if [ ! -f "$AF_REF/index/info.json" ]; then
     # Check if salmon is available
@@ -124,6 +160,7 @@ echo "Files created:"
 echo "  $AF_REF/index/           - Salmon index"
 echo "  $AF_REF/t2g.tsv          - Transcript-to-gene mapping"
 echo "  $AF_REF/3M-february-2018.txt - 10x barcode whitelist"
+echo "  $REF_DIR/gene_id_to_name.tsv - Gene ID to symbol mapping"
 echo ""
 echo "Downloaded files cached in:"
 echo "  $REF_DIR/download/"

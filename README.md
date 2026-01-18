@@ -223,6 +223,10 @@ CD16+ NK cells  ENSG00000180644  16.38   6.42            2.86e-56    PRF1
 
 ![Volcano Plots](docs/images/volcano_plots_all_celltypes.png)
 
+*PCA vs VAE Embedding* - Comparison of dimensionality reduction methods:
+
+![PCA vs VAE](docs/images/umap_pca_vs_vae.png)
+
 **Cell Types Identified** (CellTypist on PBMC):
 - CD16+ NK cells, Cycling NK cells
 - Classical monocytes, Non-classical monocytes

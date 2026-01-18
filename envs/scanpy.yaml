@@ -7,6 +7,8 @@ dependencies:
   - snakemake
   - scanpy
   - anndata
+  - python-igraph
+  - leidenalg
   - pandas
   - numpy
   - scipy

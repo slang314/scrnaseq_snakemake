@@ -126,7 +126,7 @@ After the main pipeline completes:
 ```bash
 conda activate scanpy
 
-# Clustering, cell typing, marker genes
+# Clustering, cell typing, marker genes, differential gene expression (pseudobulked by cell type)
 python scripts/downstream_analysis_v3.py
 
 # VAE embedding (optional)

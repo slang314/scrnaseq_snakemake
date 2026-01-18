@@ -35,7 +35,7 @@ snakemake --cores 16 --use-conda
 
 ## Requirements
 
-- [Conda](https://docs.conda.io/en/latest/miniconda.html) or [Mamba](https://mamba.readthedocs.io/)
+- [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
 - ~50 GB disk space for reference + demo data
 - 16+ GB RAM recommended
 
@@ -171,6 +171,56 @@ results/downstream_v3/
 └── pbmc_10k_annotated_v3_clean.h5ad # Doublets removed
 ```
 
+### Example Output (PBMC 10k Demo)
+
+Running the pipeline on the 10x PBMC 10k demo dataset produces:
+
+**Analysis Summary** (`analysis_summary.tsv`):
+```
+cells_after_knee_filter     5001
+genes                       34086
+hvgs                        2888
+n_clusters_res0.4           16
+predicted_doublets          131
+cells_after_doublet_removal 4870
+```
+
+**Marker Genes by Cluster** (`marker_genes_all_clusters.tsv`):
+```
+group  names            scores   logfoldchanges  pvals_adj  gene_symbol
+0      ENSG00000163220  51.83    5.30            0.0        S100A9
+0      ENSG00000143546  51.56    5.28            0.0        S100A8
+0      ENSG00000163221  50.59    4.45            0.0        S100A12
+```
+
+**DE Genes by Cell Type** (`de_genes_by_celltype.tsv`):
+```
+group           names            scores  logfoldchanges  pvals_adj   gene_symbol
+CD16+ NK cells  ENSG00000105374  16.48   6.95            1.04e-56    NKG7
+CD16+ NK cells  ENSG00000115523  16.47   8.37            1.04e-56    GNLY
+CD16+ NK cells  ENSG00000180644  16.38   6.42            2.86e-56    PRF1
+```
+
+**Figures Generated**:
+| Figure | Description |
+|--------|-------------|
+| `barcode_rank_plot.png` | Knee plot showing cell calling threshold |
+| `umap_overview.png` | UMAP colored by Leiden clusters and sample |
+| `umap_celltypist.png` | UMAP with CellTypist cell type annotations |
+| `umap_pbmc_markers.png` | Canonical marker gene expression on UMAP |
+| `doublet_scores.png` | Scrublet doublet score distribution |
+| `volcano_plots_all_celltypes.png` | DE volcano plots for all cell types |
+| `volcano_individual/*.png` | Individual volcano plot per cell type |
+
+**Cell Types Identified** (CellTypist on PBMC):
+- CD16+ NK cells, Cycling NK cells
+- Classical monocytes, Non-classical monocytes
+- Naive B cells, Memory B cells, Plasma cells
+- Tcm/Naive cytotoxic T cells, Tcm/Naive helper T cells
+- Tem/Effector helper T cells, Regulatory T cells, MAIT cells
+- DC1, DC2, pDC
+- Megakaryocyte precursor
+
 ## Configuration
 
 Edit `config/config.yaml`:
@@ -191,6 +241,37 @@ scanpy_qc:
   min_cells_per_gene: 3
   max_pct_mt: 20
 ```
+
+## Cell Type Annotation
+
+Cell type annotations are generated automatically using [CellTypist](https://www.celltypist.org/), a tool for automated cell type classification based on logistic regression classifiers.
+
+**Default model:** `Immune_All_Low.pkl` (immune cells from multiple tissues)
+
+This model is appropriate for PBMC and other immune-enriched samples. **If you are analyzing non-immune cells** (e.g., neurons, epithelial cells, cancer cells), you must use a different CellTypist model.
+
+### Changing the CellTypist Model
+
+1. Browse available models at https://www.celltypist.org/models
+2. Edit `scripts/downstream_analysis_v3.py` lines 516-517:
+   ```python
+   # Change 'Immune_All_Low.pkl' to your model
+   models.download_models(force_update=False, model='Your_Model.pkl')
+   model = models.Model.load(model='Your_Model.pkl')
+   ```
+
+### Available Models (examples)
+
+| Model | Use Case |
+|-------|----------|
+| `Immune_All_Low.pkl` | Immune cells (default) |
+| `Immune_All_High.pkl` | Immune cells (coarser resolution) |
+| `Human_Lung_Atlas.pkl` | Lung tissue |
+| `Cells_Intestinal_Tract.pkl` | Gut epithelium |
+| `Developing_Human_Brain.pkl` | Brain/neurons |
+| `Pan_Fetal_Human.pkl` | Fetal tissues |
+
+See the [CellTypist models page](https://www.celltypist.org/models) for the full list.
 
 ## Conda Environments
 

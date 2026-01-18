@@ -461,6 +461,108 @@ for celltype in sorted(adata.obs['celltypist_label'].unique()):
     symbols = ct_markers['gene_symbol'].fillna(ct_markers['names']).tolist()
     print(f"  {celltype}: {', '.join(symbols[:5])}")
 
+# Generate volcano plots for each cell type
+print("\nGenerating volcano plots...")
+os.makedirs(f"{FIGURE_DIR}/volcano_individual", exist_ok=True)
+
+cell_types = celltype_markers_df['group'].unique()
+n_celltypes = len(cell_types)
+n_cols = 4
+n_rows = (n_celltypes + n_cols - 1) // n_cols
+
+fig_all, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5 * n_rows))
+axes = axes.flatten()
+
+for idx, celltype in enumerate(sorted(cell_types)):
+    ax = axes[idx]
+    ct_data = celltype_markers_df[celltype_markers_df['group'] == celltype].copy()
+
+    # Calculate -log10(pval_adj), handle zeros
+    ct_data['neg_log10_pval'] = -np.log10(ct_data['pvals_adj'].clip(lower=1e-300))
+
+    # Significance thresholds
+    log2fc_thresh = 1.0
+    pval_thresh = 0.05
+
+    # Categorize genes
+    ct_data['category'] = 'NS'
+    ct_data.loc[(ct_data['pvals_adj'] < pval_thresh) & (ct_data['logfoldchanges'] > log2fc_thresh), 'category'] = 'Up'
+    ct_data.loc[(ct_data['pvals_adj'] < pval_thresh) & (ct_data['logfoldchanges'] < -log2fc_thresh), 'category'] = 'Down'
+
+    colors = {'NS': '#BBBBBB', 'Up': '#E74C3C', 'Down': '#3498DB'}
+    for cat in ['NS', 'Down', 'Up']:
+        subset = ct_data[ct_data['category'] == cat]
+        ax.scatter(subset['logfoldchanges'], subset['neg_log10_pval'],
+                   c=colors[cat], alpha=0.5, s=5, label=cat)
+
+    # Threshold lines
+    ax.axhline(-np.log10(pval_thresh), color='gray', linestyle='--', linewidth=0.5)
+    ax.axvline(log2fc_thresh, color='gray', linestyle='--', linewidth=0.5)
+    ax.axvline(-log2fc_thresh, color='gray', linestyle='--', linewidth=0.5)
+
+    # Label top genes
+    top_up = ct_data[ct_data['category'] == 'Up'].nlargest(3, 'neg_log10_pval')
+    top_down = ct_data[ct_data['category'] == 'Down'].nlargest(3, 'neg_log10_pval')
+    for _, row in pd.concat([top_up, top_down]).iterrows():
+        label = row['gene_symbol'] if pd.notna(row['gene_symbol']) else row['names']
+        ax.annotate(label, (row['logfoldchanges'], row['neg_log10_pval']), fontsize=6, alpha=0.8)
+
+    n_up = len(ct_data[ct_data['category'] == 'Up'])
+    n_down = len(ct_data[ct_data['category'] == 'Down'])
+    ax.set_title(f'{celltype}\n(Up: {n_up}, Down: {n_down})', fontsize=10)
+    ax.set_xlabel('log2 Fold Change')
+    ax.set_ylabel('-log10(adj p-value)')
+    ax.set_xlim(-10, 10)
+
+# Hide unused subplots
+for idx in range(len(cell_types), len(axes)):
+    axes[idx].axis('off')
+
+plt.tight_layout()
+plt.savefig(f"{FIGURE_DIR}/volcano_plots_all_celltypes.png", dpi=150, bbox_inches='tight')
+plt.close()
+print(f"Saved: {FIGURE_DIR}/volcano_plots_all_celltypes.png")
+
+# Individual high-res volcano plots
+for celltype in sorted(cell_types):
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ct_data = celltype_markers_df[celltype_markers_df['group'] == celltype].copy()
+    ct_data['neg_log10_pval'] = -np.log10(ct_data['pvals_adj'].clip(lower=1e-300))
+
+    ct_data['category'] = 'NS'
+    ct_data.loc[(ct_data['pvals_adj'] < pval_thresh) & (ct_data['logfoldchanges'] > log2fc_thresh), 'category'] = 'Up'
+    ct_data.loc[(ct_data['pvals_adj'] < pval_thresh) & (ct_data['logfoldchanges'] < -log2fc_thresh), 'category'] = 'Down'
+
+    for cat in ['NS', 'Down', 'Up']:
+        subset = ct_data[ct_data['category'] == cat]
+        ax.scatter(subset['logfoldchanges'], subset['neg_log10_pval'],
+                   c=colors[cat], alpha=0.5, s=10, label=cat)
+
+    ax.axhline(-np.log10(pval_thresh), color='gray', linestyle='--', linewidth=0.5)
+    ax.axvline(log2fc_thresh, color='gray', linestyle='--', linewidth=0.5)
+    ax.axvline(-log2fc_thresh, color='gray', linestyle='--', linewidth=0.5)
+
+    top_up = ct_data[ct_data['category'] == 'Up'].nlargest(5, 'neg_log10_pval')
+    top_down = ct_data[ct_data['category'] == 'Down'].nlargest(5, 'neg_log10_pval')
+    for _, row in pd.concat([top_up, top_down]).iterrows():
+        label = row['gene_symbol'] if pd.notna(row['gene_symbol']) else row['names']
+        ax.annotate(label, (row['logfoldchanges'], row['neg_log10_pval']), fontsize=8, alpha=0.9)
+
+    n_up = len(ct_data[ct_data['category'] == 'Up'])
+    n_down = len(ct_data[ct_data['category'] == 'Down'])
+    ax.set_title(f'{celltype} vs Rest\n(Up: {n_up}, Down: {n_down})', fontsize=14)
+    ax.set_xlabel('log2 Fold Change', fontsize=12)
+    ax.set_ylabel('-log10(adjusted p-value)', fontsize=12)
+    ax.legend(loc='upper right')
+    ax.set_xlim(-10, 10)
+
+    safe_name = celltype.replace('/', '_').replace(' ', '_')
+    plt.tight_layout()
+    plt.savefig(f"{FIGURE_DIR}/volcano_individual/volcano_{safe_name}.png", dpi=150, bbox_inches='tight')
+    plt.close()
+
+print(f"Saved {len(cell_types)} individual volcano plots to {FIGURE_DIR}/volcano_individual/")
+
 # =============================================================================
 # 13. PBMC MARKER VISUALIZATION
 # =============================================================================

@@ -29,7 +29,7 @@ conda activate af
 ./scripts/setup_demo_data.sh
 
 # 5. Run the pipeline
-conda deactivate
+conda activate scanpy
 snakemake --cores 16 --use-conda
 ```
 
@@ -109,6 +109,9 @@ pbmc_10k_v3     /path/to/sample_L001_R1_001.fastq.gz,/path/to/sample_L002_R1_001
 ### Main Pipeline (Snakemake)
 
 ```bash
+# Activate scanpy environment (contains snakemake)
+conda activate scanpy
+
 # Dry run - see what will be executed
 snakemake --dry-run --cores 16
 
@@ -293,7 +296,7 @@ See the [CellTypist models page](https://www.celltypist.org/models) for the full
 | Environment | Purpose | Create |
 |-------------|---------|--------|
 | `af` | salmon, alevin-fry | `conda env create -f envs/af.yaml` |
-| `scanpy` | Scanpy, analysis | `conda env create -f envs/scanpy.yaml` |
+| `scanpy` | Snakemake, Scanpy, analysis | `conda env create -f envs/scanpy.yaml` |
 
 Snakemake automatically uses the correct environment for each rule when run with `--use-conda`.
 
@@ -301,7 +304,7 @@ Snakemake automatically uses the correct environment for each rule when run with
 
 1. Place FASTQ files in `data/fastq/your_sample/`
 2. Add entry to `config/samples.tsv`
-3. Run: `snakemake --cores 16 --use-conda`
+3. Run: `conda activate scanpy && snakemake --cores 16 --use-conda`
 
 ## License
 

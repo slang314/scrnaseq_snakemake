@@ -201,16 +201,27 @@ CD16+ NK cells  ENSG00000115523  16.47   8.37            1.04e-56    GNLY
 CD16+ NK cells  ENSG00000180644  16.38   6.42            2.86e-56    PRF1
 ```
 
-**Figures Generated**:
-| Figure | Description |
-|--------|-------------|
-| `barcode_rank_plot.png` | Knee plot showing cell calling threshold |
-| `umap_overview.png` | UMAP colored by Leiden clusters and sample |
-| `umap_celltypist.png` | UMAP with CellTypist cell type annotations |
-| `umap_pbmc_markers.png` | Canonical marker gene expression on UMAP |
-| `doublet_scores.png` | Scrublet doublet score distribution |
-| `volcano_plots_all_celltypes.png` | DE volcano plots for all cell types |
-| `volcano_individual/*.png` | Individual volcano plot per cell type |
+**Example Figures**:
+
+*Barcode Rank Plot* - Knee plot for cell calling:
+
+![Barcode Rank Plot](docs/images/barcode_rank_plot.png)
+
+*UMAP Overview* - Leiden clusters and sample distribution:
+
+![UMAP Overview](docs/images/umap_overview.png)
+
+*CellTypist Annotations* - Automated cell type labels:
+
+![CellTypist UMAP](docs/images/umap_celltypist.png)
+
+*Marker Gene Expression* - Canonical PBMC markers on UMAP:
+
+![PBMC Markers](docs/images/umap_pbmc_markers.png)
+
+*Differential Expression* - Volcano plots for all cell types:
+
+![Volcano Plots](docs/images/volcano_plots_all_celltypes.png)
 
 **Cell Types Identified** (CellTypist on PBMC):
 - CD16+ NK cells, Cycling NK cells

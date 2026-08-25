@@ -8,6 +8,7 @@ This avoids circular reasoning where labels derived from the data
 are used to train the model that produces embeddings.
 """
 
+import argparse
 import torch
 import torch.nn as nn
 import pyro
@@ -15,12 +16,14 @@ import pyro.distributions as dist
 from pyro.infer import SVI, TraceMeanField_ELBO
 from pyro.optim import Adam
 import numpy as np
+import pandas as pd
 import random
 import scanpy as sc
 from anndata.experimental.pytorch import AnnLoader
 import matplotlib.pyplot as plt
 import os
 import warnings
+from pathlib import Path
 warnings.filterwarnings('ignore')
 
 # =============================================================================
@@ -33,8 +36,38 @@ torch.manual_seed(RANDOM_SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(RANDOM_SEED)
 
+# =============================================================================
+# SAMPLE SELECTION
+# =============================================================================
+def infer_sample_from_sheet():
+    """Return the sample name from config/samples.tsv when it has exactly one row."""
+    samples_path = Path("config/samples.tsv")
+    if not samples_path.exists():
+        return None
+    df = pd.read_csv(samples_path, sep="\t")
+    return df["sample"].iloc[0] if len(df) == 1 else None
+
+
+parser = argparse.ArgumentParser(description="Train an unsupervised VAE on a sample's downstream_analysis_v3 output")
+parser.add_argument(
+    "--sample",
+    default=None,
+    help="Sample name matching results/downstream_v3/<sample>/annotated.h5ad "
+         "(the output of downstream_analysis_v3.py). Inferred automatically "
+         "when config/samples.tsv has exactly one sample.",
+)
+args = parser.parse_args()
+
+SAMPLE = args.sample or infer_sample_from_sheet()
+if SAMPLE is None:
+    parser.error(
+        "config/samples.tsv has more than one sample (or is missing) - "
+        "pass --sample <name> to select which sample's downstream_analysis_v3 output to use."
+    )
+print(f"Sample: {SAMPLE}")
+
 # Settings - use v3 output
-OUTPUT_DIR = "results/downstream_v3"
+OUTPUT_DIR = f"results/downstream_v3/{SAMPLE}"
 os.makedirs(f"{OUTPUT_DIR}/figures", exist_ok=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -181,7 +214,7 @@ if __name__ == "__main__":
     print("=" * 60)
 
     # Load annotated data from v3 pipeline
-    adata = sc.read_h5ad(f"{OUTPUT_DIR}/pbmc_10k_annotated_v3.h5ad")
+    adata = sc.read_h5ad(f"{OUTPUT_DIR}/annotated.h5ad")
     print(f"Loaded: {adata.shape[0]} cells x {adata.shape[1]} genes")
 
     # Use raw counts from layers
@@ -387,8 +420,8 @@ if __name__ == "__main__":
     print("=" * 60)
 
     # Save updated adata with VAE embeddings
-    adata.write_h5ad(f"{OUTPUT_DIR}/pbmc_10k_annotated_v3_vae.h5ad")
-    print(f"Saved: pbmc_10k_annotated_v3_vae.h5ad")
+    adata.write_h5ad(f"{OUTPUT_DIR}/annotated_vae.h5ad")
+    print(f"Saved: {OUTPUT_DIR}/annotated_vae.h5ad")
 
     # Save model (UNSUPERVISED - no n_classes)
     torch.save({

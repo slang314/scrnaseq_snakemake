@@ -136,11 +136,13 @@ After the main pipeline completes:
 conda activate scanpy
 
 # Clustering, cell typing, marker genes, differential gene expression (pseudobulked by cell type)
-python scripts/downstream_analysis_v3.py
+python scripts/downstream_analysis_v3.py --sample pbmc_10k_v3
 
 # VAE embedding (optional)
-python scripts/vae_embedding.py
+python scripts/vae_embedding.py --sample pbmc_10k_v3
 ```
+
+`--sample` can be omitted when `config/samples.tsv` has exactly one sample — it's inferred automatically. With multiple samples, it's required (each script analyzes one sample per run).
 
 ## Outputs
 
@@ -162,7 +164,7 @@ results/
 ### Downstream Analysis
 
 ```
-results/downstream_v3/
+results/downstream_v3/{sample}/
 ├── figures/
 │   ├── barcode_rank_plot.png    # Knee plot for cell calling
 │   ├── umap_overview.png        # UMAP with clusters
@@ -177,9 +179,13 @@ results/downstream_v3/
 ├── marker_genes_all_clusters.tsv    # Marker genes per Leiden cluster
 ├── de_genes_by_celltype.tsv         # DE genes per cell type (CellTypist)
 ├── analysis_summary.tsv             # Cell/gene/cluster counts for the run
-├── pbmc_10k_annotated_v3.h5ad       # Full annotated dataset
-└── pbmc_10k_annotated_v3_clean.h5ad # Doublets removed
+├── annotated.h5ad                   # Full annotated dataset
+├── annotated_clean.h5ad             # Doublets removed
+├── annotated_vae.h5ad               # With VAE embeddings (after vae_embedding.py)
+└── vae_model.pt                     # Trained VAE weights
 ```
+
+`{sample}` is whatever you passed to `--sample` (e.g. `results/downstream_v3/pbmc_10k_v3/`), so multiple samples can be analyzed side by side without overwriting each other.
 
 ### Example Output (PBMC 10k Demo)
 
@@ -290,7 +296,7 @@ This model is appropriate for PBMC and other immune-enriched samples. **If you a
 ### Changing the CellTypist Model
 
 1. Browse available models at https://www.celltypist.org/models
-2. Edit `scripts/downstream_analysis_v3.py` lines 516-517:
+2. Edit `scripts/downstream_analysis_v3.py` lines 547-548:
    ```python
    # Change 'Immune_All_Low.pkl' to your model
    models.download_models(force_update=False, model='Your_Model.pkl')
@@ -325,7 +331,7 @@ Snakemake automatically uses the correct environment for each rule when run with
 2. Add entry to `config/samples.tsv`
 3. Run: `conda activate scanpy && snakemake --cores 16 --use-conda`
 
-This takes a new sample through quantification and QC (steps 1-2 in [Overview](#overview)). **The downstream analysis scripts do not follow the sample sheet** — `downstream_analysis_v3.py` and `vae_embedding.py` hardcode `pbmc_10k_v3` as both the input filename (`results/anndata/qc/pbmc_10k_v3.h5ad`) and every output filename. To run downstream analysis on your own sample, edit `INPUT_H5AD` near the top of `downstream_analysis_v3.py` (and the corresponding paths in `vae_embedding.py`) to point at your sample instead.
+This takes a new sample through quantification and QC (steps 1-2 in [Overview](#overview)). For downstream analysis, run `python scripts/downstream_analysis_v3.py --sample your_sample` (and `vae_embedding.py --sample your_sample`) — see [Downstream Analysis (Manual)](#downstream-analysis-manual).
 
 ## License
 

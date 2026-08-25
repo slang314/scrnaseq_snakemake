@@ -10,6 +10,7 @@ Fixes implemented:
 5. VAE: Will be run separately as unsupervised (no circular semi-supervision)
 """
 
+import argparse
 import scanpy as sc
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ import matplotlib.pyplot as plt
 import os
 import warnings
 import random
+from pathlib import Path
 warnings.filterwarnings('ignore')
 
 # =============================================================================
@@ -52,10 +54,39 @@ try:
 except:
     pass
 
+# =============================================================================
+# SAMPLE SELECTION
+# =============================================================================
+def infer_sample_from_sheet():
+    """Return the sample name from config/samples.tsv when it has exactly one row."""
+    samples_path = Path("config/samples.tsv")
+    if not samples_path.exists():
+        return None
+    df = pd.read_csv(samples_path, sep="\t")
+    return df["sample"].iloc[0] if len(df) == 1 else None
+
+
+parser = argparse.ArgumentParser(description="Cluster, annotate, and DE-test a QC'd sample")
+parser.add_argument(
+    "--sample",
+    default=None,
+    help="Sample name matching results/anndata/qc/<sample>.h5ad. "
+         "Inferred automatically when config/samples.tsv has exactly one sample.",
+)
+args = parser.parse_args()
+
+SAMPLE = args.sample or infer_sample_from_sheet()
+if SAMPLE is None:
+    parser.error(
+        "config/samples.tsv has more than one sample (or is missing) - "
+        "pass --sample <name> to select which QC'd sample to analyze."
+    )
+print(f"Sample: {SAMPLE}")
+
 # Paths
-INPUT_H5AD = "results/anndata/qc/pbmc_10k_v3.h5ad"
+INPUT_H5AD = f"results/anndata/qc/{SAMPLE}.h5ad"
 GENE_MAP = "resources/reference/gene_id_to_name.tsv"
-OUTPUT_DIR = "results/downstream_v3"
+OUTPUT_DIR = f"results/downstream_v3/{SAMPLE}"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(f"{OUTPUT_DIR}/figures", exist_ok=True)
 
@@ -685,11 +716,11 @@ adata_clean = adata[~adata.obs['predicted_doublet']].copy()
 print(f"Clean dataset (doublets removed): {adata_clean.n_obs} cells")
 
 # Save
-adata.write_h5ad(f"{OUTPUT_DIR}/pbmc_10k_annotated_v3.h5ad")
-print(f"Saved: pbmc_10k_annotated_v3.h5ad ({adata.n_obs} cells)")
+adata.write_h5ad(f"{OUTPUT_DIR}/annotated.h5ad")
+print(f"Saved: {OUTPUT_DIR}/annotated.h5ad ({adata.n_obs} cells)")
 
-adata_clean.write_h5ad(f"{OUTPUT_DIR}/pbmc_10k_annotated_v3_clean.h5ad")
-print(f"Saved: pbmc_10k_annotated_v3_clean.h5ad ({adata_clean.n_obs} cells)")
+adata_clean.write_h5ad(f"{OUTPUT_DIR}/annotated_clean.h5ad")
+print(f"Saved: {OUTPUT_DIR}/annotated_clean.h5ad ({adata_clean.n_obs} cells)")
 
 # Summary
 print("\n" + "=" * 60)

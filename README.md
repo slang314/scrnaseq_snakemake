@@ -210,6 +210,10 @@ CD16+ NK cells  ENSG00000180644  16.38   6.42            2.86e-56    PRF1
 
 ![Barcode Rank Plot](docs/images/barcode_rank_plot.png)
 
+*Doublet Scores* - Scrublet doublet detection on UMAP:
+
+![Doublet Scores](docs/images/doublet_scores.png)
+
 *UMAP Overview* - Leiden clusters and sample distribution:
 
 ![UMAP Overview](docs/images/umap_overview.png)
@@ -226,9 +230,17 @@ CD16+ NK cells  ENSG00000180644  16.38   6.42            2.86e-56    PRF1
 
 ![Volcano Plots](docs/images/volcano_plots_all_celltypes.png)
 
+*VAE Training Loss* - Convergence of the unsupervised VAE:
+
+![VAE Training Loss](docs/images/vae_training_loss.png)
+
 *PCA vs VAE Embedding* - Comparison of dimensionality reduction methods:
 
 ![PCA vs VAE](docs/images/umap_pca_vs_vae.png)
+
+*VAE Marker Expression* - Canonical PBMC markers on the VAE UMAP:
+
+![VAE Markers](docs/images/umap_vae_markers.png)
 
 **Cell Types Identified** (CellTypist on PBMC):
 - CD16+ NK cells, Cycling NK cells

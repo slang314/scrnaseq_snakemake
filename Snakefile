@@ -30,16 +30,6 @@ def get_fq2(wildcards):
     return fq2.split(",")
 
 
-def get_fq1_str(wildcards):
-    """Get R1 FASTQ path(s) as space-separated string for shell."""
-    return " ".join(get_fq1(wildcards))
-
-
-def get_fq2_str(wildcards):
-    """Get R2 FASTQ path(s) as space-separated string for shell."""
-    return " ".join(get_fq2(wildcards))
-
-
 # Define final outputs
 rule all:
     input:
@@ -62,8 +52,6 @@ rule alevin_fry_quant:
         af_ref=config["reference"]["af_dir"],
         salmon_flags=config["alevin_fry"].get("salmon_flags", "--chromiumV3"),
         outdir="results/af/{sample}",
-        r1_str=get_fq1_str,
-        r2_str=get_fq2_str,
     threads: config["alevin_fry"]["threads"]
     resources:
         mem_gb=config["alevin_fry"]["mem_gb"]
@@ -74,15 +62,15 @@ rule alevin_fry_quant:
         set -euo pipefail
         mkdir -p {params.outdir}
 
-        echo "R1 files: {params.r1_str}"
-        echo "R2 files: {params.r2_str}"
+        echo "R1 files: {input.r1}"
+        echo "R2 files: {input.r2}"
 
         # Step 1: Run salmon alevin
         salmon alevin \
             -i {params.af_ref}/index \
             -l ISR \
-            -1 {params.r1_str} \
-            -2 {params.r2_str} \
+            -1 {input.r1} \
+            -2 {input.r2} \
             {params.salmon_flags} \
             -p {threads} \
             -o {params.outdir}/alevin \

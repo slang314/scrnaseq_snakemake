@@ -552,7 +552,12 @@ try:
     adata_pred = predictions.to_adata()
 
     # Transfer labels back to main adata
+    # NOTE: 'celltypist_label' is the FINAL label after majority-voting (over-clustering +
+    # consensus smoothing). 'celltypist_label_individual' is what the classifier called this
+    # cell on its own, before smoothing. 'celltypist_conf' is the confidence of that individual
+    # call, NOT of the final majority-voted label -- the two can disagree (see celltype_counts.tsv).
     adata.obs['celltypist_label'] = adata_pred.obs['majority_voting'].values
+    adata.obs['celltypist_label_individual'] = adata_pred.obs['predicted_labels'].values
     adata.obs['celltypist_conf'] = adata_pred.obs['conf_score'].values
 
     print("Celltypist annotations:")
@@ -721,6 +726,27 @@ print(f"Saved: {OUTPUT_DIR}/annotated.h5ad ({adata.n_obs} cells)")
 
 adata_clean.write_h5ad(f"{OUTPUT_DIR}/annotated_clean.h5ad")
 print(f"Saved: {OUTPUT_DIR}/annotated_clean.h5ad ({adata_clean.n_obs} cells)")
+
+# Cell type composition + confidence (computed on the doublet-removed dataset)
+if 'celltypist_label' in adata_clean.obs.columns:
+    agree = (adata_clean.obs['celltypist_label'].astype(str)
+             == adata_clean.obs['celltypist_label_individual'].astype(str))
+    counts = adata_clean.obs['celltypist_label'].value_counts()
+    conf = adata_clean.obs.groupby('celltypist_label', observed=True)['celltypist_conf'].agg(
+        ['mean', 'median', 'min', 'max'])
+    pct_agree = agree.groupby(adata_clean.obs['celltypist_label'], observed=True).mean()
+
+    celltype_counts_df = pd.DataFrame({
+        'n_cells': counts,
+        'pct_cells': (100 * counts / adata_clean.n_obs).round(1),
+    }).join(conf.round(3)).join(pct_agree.round(3).rename('pct_agree_with_individual_call'))
+    celltype_counts_df = celltype_counts_df.sort_values('n_cells', ascending=False)
+    celltype_counts_df.index.name = 'celltype'
+
+    celltype_counts_df.to_csv(f"{OUTPUT_DIR}/celltype_counts.tsv", sep='\t')
+    print(f"\nSaved: {OUTPUT_DIR}/celltype_counts.tsv")
+    print(f"  ({100*agree.mean():.1f}% of cells' final label matches their individual, "
+          f"pre-majority-vote call -- 'celltypist_conf' is confidence in that individual call)")
 
 # Summary
 print("\n" + "=" * 60)

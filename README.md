@@ -178,6 +178,7 @@ results/downstream_v3/{sample}/
 │   └── umap_vae_markers.png     # Markers on VAE UMAP
 ├── marker_genes_all_clusters.tsv    # Marker genes per Leiden cluster
 ├── de_genes_by_celltype.tsv         # DE genes per cell type (CellTypist)
+├── celltype_counts.tsv              # Cell counts, % composition, and confidence per CellTypist label
 ├── analysis_summary.tsv             # Cell/gene/cluster counts for the run
 ├── annotated.h5ad                   # Full annotated dataset
 ├── annotated_clean.h5ad             # Doublets removed
@@ -216,6 +217,16 @@ CD16+ NK cells  ENSG00000105374  17.26   6.85            3.48e-62    NKG7
 CD16+ NK cells  ENSG00000115523  17.07   8.12            4.57e-61    GNLY
 CD16+ NK cells  ENSG00000077984  16.98   5.64            1.41e-60    CST7
 ```
+
+**Cell Type Composition & Confidence** (`celltype_counts.tsv`, doublets excluded):
+```
+celltype                mean   median  pct_agree_with_individual_call
+Classical monocytes     0.971  0.997   0.906
+Tem/Effector helper T   0.933  0.987   0.628
+Cycling NK cells        0.944  0.988   0.304
+pDC                     1.000  1.000   1.000
+```
+`mean`/`median`/`min`/`max` are CellTypist's `conf_score` — the classifier's confidence in each cell's **individual** call, computed *before* CellTypist's majority-voting smoothing step (over-cluster, then relabel every cell in the over-cluster to its consensus label). `pct_agree_with_individual_call` is how often that smoothing actually changed the label for cells of this final type — low agreement (e.g. Cycling NK cells at 30%, Tem/Effector helper T at 63%) means the final label leaned heavily on neighborhood consensus rather than the individual cell's own signal, which is a better read on how trustworthy a given cell type's count is than `conf_score` alone. High-`conf_score`-but-low-agreement types are exactly where the reported cell counts are least trustworthy.
 
 **Example Figures**:
 

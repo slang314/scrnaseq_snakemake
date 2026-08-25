@@ -111,6 +111,8 @@ rule af_to_anndata:
         done="results/af/{sample}/DONE.txt",
     output:
         h5ad="results/anndata/raw/{sample}.h5ad",
+    params:
+        gene_map=config["reference"]["gene_map"],
     conda:
         "envs/scanpy.yaml"
     shell:
@@ -118,7 +120,8 @@ rule af_to_anndata:
         python scripts/af_to_anndata.py \
             --sample {wildcards.sample} \
             --af-dir results/af/{wildcards.sample} \
-            --out {output.h5ad}
+            --out {output.h5ad} \
+            --gene-map {params.gene_map}
         """
 
 

@@ -2,7 +2,7 @@
 reference:
   af_dir: "resources/reference/af_ref"   # contains salmon index etc., per your build process
   txome: "resources/reference/transcripts.fa"  # optional; used for provenance only
-  gene_map: "resources/reference/gene_map.tsv" # transcript->gene mapping if needed
+  gene_map: "resources/reference/gene_id_to_name.tsv" # gene_id -> gene_name mapping, built by setup_reference.sh
 
 alevin_fry:
   # 10x Chromium 3' v3 chemistry (16bp BC + 12bp UMI)

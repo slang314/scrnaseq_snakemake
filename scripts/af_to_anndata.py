@@ -103,6 +103,7 @@ def main():
     ap.add_argument("--sample", required=True, help="Sample name")
     ap.add_argument("--af-dir", required=True, help="Alevin-fry output directory")
     ap.add_argument("--out", required=True, help="Output h5ad file path")
+    ap.add_argument("--gene-map", default=None, help="Optional TSV mapping gene_id -> gene_name (no header)")
     args = ap.parse_args()
 
     af_dir = Path(args.af_dir)
@@ -153,6 +154,22 @@ def main():
         var = pd.DataFrame(index=feat_lines)
 
     var.index.name = 'gene'
+
+    if 'gene_id' not in var.columns:
+        var['gene_id'] = var.index
+
+    # alevin-fry's feature list is typically gene IDs only (t2g.tsv has no
+    # symbol column), so look up symbols from a separate id->name map.
+    if args.gene_map and 'gene_name' not in var.columns:
+        gene_map_path = Path(args.gene_map)
+        if gene_map_path.exists():
+            gene_map_df = pd.read_csv(gene_map_path, sep='\t', header=None, names=['gene_id', 'gene_name'])
+            id_to_name = gene_map_df.set_index('gene_id')['gene_name'].to_dict()
+            var['gene_name'] = var['gene_id'].map(id_to_name).fillna(var['gene_id'])
+            n_mapped = var['gene_id'].isin(id_to_name).sum()
+            print(f"Mapped {n_mapped}/{len(var)} gene IDs to symbols using {gene_map_path}")
+        else:
+            print(f"Warning: --gene-map file not found: {gene_map_path}")
 
     # Verify dimensions
     print(f"Matrix shape: {X.shape}")

@@ -37,7 +37,7 @@ snakemake --cores 16 --use-conda
 
 - [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
 - ~50 GB disk space for reference + demo data
-- 16+ GB RAM recommended
+- 48+ GB RAM recommended (the demo config requests `mem_gb: 48` for the alevin-fry quantification step; see `config/config.yaml`)
 
 ## Project Structure
 
@@ -53,10 +53,15 @@ scrnaseq_snakemake/
 ├── scripts/
 │   ├── setup_reference.sh    # Download & build reference
 │   ├── setup_demo_data.sh    # Download demo FASTQ data
+│   ├── build_t2g.py          # Transcript-to-gene mapping from GTF (called by setup_reference.sh)
 │   ├── af_to_anndata.py      # Convert alevin-fry → AnnData
 │   ├── scanpy_qc.py          # QC filtering
-│   ├── downstream_analysis_v3.py  # Clustering & annotation
-│   └── vae_embedding.py      # VAE latent space analysis
+│   ├── merge_qc_h5ad.py      # Merge per-sample QC'd AnnData objects
+│   ├── downstream_analysis_v3.py  # Clustering & annotation (current; run manually, see below)
+│   ├── vae_embedding.py      # VAE latent space analysis (run manually, see below)
+│   ├── pseudobulk_de.py      # Optional: pydeseq2-based pseudobulk DE, consumes v3's output
+│   └── downstream_analysis.py / downstream_analysis_v2.py
+│       # Earlier iterations, superseded by downstream_analysis_v3.py; kept for reference
 ├── resources/
 │   └── reference/af_ref/     # Reference files (built by setup script)
 ├── data/                     # FASTQ files (user-provided)
@@ -78,6 +83,7 @@ This downloads from GENCODE and builds:
 - `resources/reference/af_ref/index/` - Salmon index (~900 MB)
 - `resources/reference/af_ref/t2g.tsv` - Transcript-to-gene mapping
 - `resources/reference/af_ref/3M-february-2018.txt` - 10x barcode whitelist
+- `resources/reference/gene_id_to_name.tsv` - Gene ID → symbol mapping (used for mito-gene detection and to attach gene symbols downstream)
 
 ### 2. Demo Data
 
@@ -170,6 +176,7 @@ results/downstream_v3/
 │   └── umap_vae_markers.png     # Markers on VAE UMAP
 ├── marker_genes_all_clusters.tsv    # Marker genes per Leiden cluster
 ├── de_genes_by_celltype.tsv         # DE genes per cell type (CellTypist)
+├── analysis_summary.tsv             # Cell/gene/cluster counts for the run
 ├── pbmc_10k_annotated_v3.h5ad       # Full annotated dataset
 └── pbmc_10k_annotated_v3_clean.h5ad # Doublets removed
 ```
@@ -180,28 +187,28 @@ Running the pipeline on the 10x PBMC 10k demo dataset produces:
 
 **Analysis Summary** (`analysis_summary.tsv`):
 ```
-cells_after_knee_filter     5001
-genes                       34086
-hvgs                        2888
-n_clusters_res0.4           16
-predicted_doublets          131
-cells_after_doublet_removal 4870
+cells_after_knee_filter     5004
+genes                       34085
+hvgs                        2884
+n_clusters_res0.4           15
+predicted_doublets          128
+cells_after_doublet_removal 4876
 ```
 
 **Marker Genes by Cluster** (`marker_genes_all_clusters.tsv`):
 ```
 group  names            scores   logfoldchanges  pvals_adj  gene_symbol
-0      ENSG00000163220  51.83    5.30            0.0        S100A9
-0      ENSG00000143546  51.56    5.28            0.0        S100A8
-0      ENSG00000163221  50.59    4.45            0.0        S100A12
+0      ENSG00000163220  51.72    5.30            0.0        S100A9
+0      ENSG00000143546  51.45    5.28            0.0        S100A8
+0      ENSG00000163221  50.38    4.44            0.0        S100A12
 ```
 
 **DE Genes by Cell Type** (`de_genes_by_celltype.tsv`):
 ```
 group           names            scores  logfoldchanges  pvals_adj   gene_symbol
-CD16+ NK cells  ENSG00000105374  16.48   6.95            1.04e-56    NKG7
-CD16+ NK cells  ENSG00000115523  16.47   8.37            1.04e-56    GNLY
-CD16+ NK cells  ENSG00000180644  16.38   6.42            2.86e-56    PRF1
+CD16+ NK cells  ENSG00000105374  17.26   6.85            3.48e-62    NKG7
+CD16+ NK cells  ENSG00000115523  17.07   8.12            4.57e-61    GNLY
+CD16+ NK cells  ENSG00000077984  16.98   5.64            1.41e-60    CST7
 ```
 
 **Example Figures**:
@@ -267,7 +274,7 @@ alevin_fry:
 scanpy_qc:
   species: "human"
   mito_prefix: "MT-"
-  min_genes: 200
+  min_genes: 10
   min_cells_per_gene: 3
   max_pct_mt: 20
 ```
@@ -317,6 +324,8 @@ Snakemake automatically uses the correct environment for each rule when run with
 1. Place FASTQ files in `data/fastq/your_sample/`
 2. Add entry to `config/samples.tsv`
 3. Run: `conda activate scanpy && snakemake --cores 16 --use-conda`
+
+This takes a new sample through quantification and QC (steps 1-2 in [Overview](#overview)). **The downstream analysis scripts do not follow the sample sheet** — `downstream_analysis_v3.py` and `vae_embedding.py` hardcode `pbmc_10k_v3` as both the input filename (`results/anndata/qc/pbmc_10k_v3.h5ad`) and every output filename. To run downstream analysis on your own sample, edit `INPUT_H5AD` near the top of `downstream_analysis_v3.py` (and the corresponding paths in `vae_embedding.py`) to point at your sample instead.
 
 ## License
 
